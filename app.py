@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, redirect, jsonify, url_for, send_from_directory
+from flask import Flask, request, redirect, jsonify, url_for, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__, instance_relative_config=True)
@@ -10,10 +10,19 @@ app.secret_key = app.config['SECRET_KEY']
 UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
 ALLOWED_EXTENSIONS = app.config['ALLOWED_EXTENSIONS']
 
+def need_api_key(func):
+	def wrapper(*args, **kwargs):
+		if request.headers.get('X-API-Key') == app.config['API_KEY']:
+			return func(*args, **kwargs)
+		else:
+			abort(401)
+	return wrapper
+
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=['POST'])
+@need_api_key
 def upload_file():
 	if 'file' not in request.files:
 		resp = jsonify({'message' : 'No file part in the request'})
