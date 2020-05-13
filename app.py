@@ -1,18 +1,19 @@
 import os
+import config
 from flask import Flask, request, redirect, jsonify, url_for, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__, instance_relative_config=True)
-app.config.from_object('config')
-app.config.from_pyfile('config.py')
+app = Flask(__name__)
+config = config.Config()
 
-app.secret_key = app.config['SECRET_KEY']
-UPLOAD_FOLDER = app.config['UPLOAD_FOLDER']
-ALLOWED_EXTENSIONS = app.config['ALLOWED_EXTENSIONS']
+app.secret_key = config.get('secret_key')
+API_KEY = config.get('api_key')
+ALLOWED_EXTENSIONS = config.get('allowed_extensions')
+UPLOAD_FOLDER = config.get('upload_folder')
 
 def need_api_key(func):
 	def wrapper(*args, **kwargs):
-		if request.headers.get('X-API-Key') == app.config['API_KEY']:
+		if request.headers.get('X-API-Key') == API_KEY:
 			return func(*args, **kwargs)
 		else:
 			abort(401)
@@ -37,7 +38,7 @@ def upload_file():
 
 	if file and allowed_file(file.filename):
 		filename = secure_filename(file.filename)
-		file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+		file.save(os.path.join(UPLOAD_FOLDER, filename))
 		resp = jsonify({'url' : url_for('uploaded_file', filename=filename)})
 		resp.status_code = 201
 		return resp
@@ -48,8 +49,8 @@ def upload_file():
 		return resp
 
 @app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+def uploaded_file(filename):	
+	return send_from_directory(UPLOAD_FOLDER, filename)
 
 if __name__ == "__main__":
     app.run()

@@ -1,0 +1,13 @@
+{
+    "secret_key": "flask_secret_key_here",
+    "api_key": "your_api_key_here",
+    "upload_folder": "/path/to/uploads/",
+    "allowed_extensions": [
+        "txt",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "gifv"
+    ]
+}
