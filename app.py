@@ -1,6 +1,6 @@
 import os
 import config
-from flask import Flask, request, redirect, jsonify, url_for, send_from_directory, abort
+from flask import Flask, request, jsonify, url_for, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -26,25 +26,28 @@ def allowed_file(filename):
 @need_api_key
 def upload_file():
 	if 'file' not in request.files:
-		resp = jsonify({'message' : 'No file part in the request'})
+		resp = jsonify({'message': 'File not included in the request'})
 		resp.status_code = 400
 		return resp
 
 	file = request.files['file']
 	if file.filename == '':
-		resp = jsonify({'message' : 'No file selected for uploading'})
+		resp = jsonify({'message': 'No file selected for uploading'})
 		resp.status_code = 400
 		return resp
 
 	if file and allowed_file(file.filename):
 		filename = secure_filename(file.filename)
 		file.save(os.path.join(UPLOAD_FOLDER, filename))
+		
 		resp = jsonify({'url' : url_for('uploaded_file', filename=filename)})
 		resp.status_code = 201
 		return resp
 
 	else:
-		resp = jsonify({'message' : 'Allowed file types are txt, pdf, png, jpg, jpeg, gif'})
+		message = "Allowed file types: {}".format(", ".join(ALLOWED_EXTENSIONS))
+		
+		resp = jsonify({'message': message})
 		resp.status_code = 400
 		return resp
 
