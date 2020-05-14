@@ -2,6 +2,8 @@ import os
 import config
 from flask import Flask, request, jsonify, url_for, send_from_directory, abort
 from werkzeug.utils import secure_filename
+from random import choice
+from string import ascii_letters
 
 app = Flask(__name__)
 config = config.Config()
@@ -22,6 +24,14 @@ def need_api_key(func):
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def generate_filename(extension, path=UPLOAD_FOLDER):
+	filename = ''.join(choice(ascii_letters) for i in range(6))
+
+	while os.path.exists(os.path.join(path, "{}.{}".format(filename, extension))):
+		filename = ''.join(choice(ascii_letters) for i in range(6))
+	
+	return filename
+
 @app.route('/upload', methods=['POST'])
 @need_api_key
 def upload_file():
@@ -37,16 +47,18 @@ def upload_file():
 		return resp
 
 	if file and allowed_file(file.filename):
-		filename = secure_filename(file.filename)
-		file.save(os.path.join(UPLOAD_FOLDER, filename))
+		filename = secure_filename(file.filename.lower()).rsplit('.', 1)
+
+		file.filename = "{}.{}".format(generate_filename(filename[1]), filename[1])
+		file.save(os.path.join(UPLOAD_FOLDER, file.filename))
 		
-		resp = jsonify({'url' : url_for('uploaded_file', filename=filename)})
+		resp = jsonify({'url': url_for('uploaded_file', filename=file.filename)})
 		resp.status_code = 201
 		return resp
 
 	else:
 		message = "Allowed file types: {}".format(", ".join(ALLOWED_EXTENSIONS))
-		
+
 		resp = jsonify({'message': message})
 		resp.status_code = 400
 		return resp
