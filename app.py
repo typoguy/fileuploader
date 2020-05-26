@@ -32,6 +32,10 @@ def generate_filename(extension, path=UPLOAD_FOLDER):
 	
 	return filename
 
+@app.route('/')
+def index_page():
+	return ''
+
 @app.route('/upload', methods=['POST'])
 @need_api_key
 def upload_file():
@@ -63,7 +67,7 @@ def upload_file():
 		resp.status_code = 400
 		return resp
 
-@app.route('/uploads/<filename>')
+@app.route('/<filename>')
 def uploaded_file(filename):
 	return send_from_directory(UPLOAD_FOLDER, filename)
 
